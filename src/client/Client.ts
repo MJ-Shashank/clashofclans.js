@@ -2,7 +2,7 @@ import { ClanSearchOptions, SearchOptions, ClientOptions, InitOptions, OverrideO
 import { LEGEND_LEAGUE_ID, EVENTS, CWL_ROUNDS } from '../util/Constants';
 import { HTTPError, NotInWarError } from '../rest/HTTPError';
 import { RESTManager } from '../rest/RESTManager';
-import { EventManager } from './EventManager';
+import { EventManager, LoopInterval } from './EventManager';
 import { EventEmitter } from 'events';
 import { Util } from '../util/Util';
 
@@ -36,11 +36,11 @@ export class Client extends EventEmitter {
 	/** REST Handler of the client. */
 	public readonly rest: RESTManager;
 
-	public constructor(options?: ClientOptions) {
+	public constructor(options?: ClientOptions, loopInterval?: LoopInterval) {
 		super();
 
 		this.rest = new RESTManager(options);
-		this.events = new EventManager(this);
+		this.events = new EventManager(this, loopInterval);
 	}
 
 	/** Contains various general-purpose utility methods. */

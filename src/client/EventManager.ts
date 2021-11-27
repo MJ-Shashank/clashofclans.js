@@ -32,9 +32,16 @@ export class EventManager {
 	private _inMaintenance: boolean;
 	private _maintenanceStartTime: Date | null;
 
-	public constructor(private readonly client: Client) {
+	private _clanLoopInterval: number;
+	private _playerLoopInterval: number;
+	private _warLoopInterval: number;
+
+	public constructor(private readonly client: Client, loopInterval?: LoopInterval) {
 		this._inMaintenance = Boolean(false);
 		this._maintenanceStartTime = null;
+		this._clanLoopInterval = loopInterval?.clans ?? 60;
+		this._playerLoopInterval = loopInterval?.players ?? 60;
+		this._warLoopInterval = loopInterval?.wars ?? 60;
 	}
 
 	/** Initialize the Event Manager to start pulling. */
@@ -198,27 +205,36 @@ export class EventManager {
 	}
 
 	private async clanUpdateHandler() {
+		const startTime = new Date().getTime();
 		this.client.emit(EVENTS.CLAN_LOOP_START);
 		for (const tag of this._clanTags) await this.runClanUpdate(tag);
 		this.client.emit(EVENTS.CLAN_LOOP_END);
+		const endTime = new Date().getTime();
 
-		setTimeout(this.clanUpdateHandler.bind(this), 10_000);
+		await Util.delay(((endTime - startTime) / 1000 > this._clanLoopInterval ? 0 : (this._clanLoopInterval * 1000 - (endTime - startTime))));
+		this.clanUpdateHandler.call(this);
 	}
 
 	private async playerUpdateHandler() {
+		const startTime = new Date().getTime();
 		this.client.emit(EVENTS.PLAYER_LOOP_START);
 		for (const tag of this._playerTags) await this.runPlayerUpdate(tag);
 		this.client.emit(EVENTS.PLAYER_LOOP_END);
+		const endTime = new Date().getTime();
 
-		setTimeout(this.playerUpdateHandler.bind(this), 10_000);
+		await Util.delay(((endTime - startTime) / 1000 > this._playerLoopInterval ? 0 : (this._playerLoopInterval * 1000 - (endTime - startTime))));
+		this.playerUpdateHandler.call(this);
 	}
 
 	private async warUpdateHandler() {
+		const startTime = new Date().getTime();
 		this.client.emit(EVENTS.WAR_LOOP_START);
 		for (const tag of this._warTags) await this.runWarUpdate(tag);
 		this.client.emit(EVENTS.WAR_LOOP_END);
+		const endTime = new Date().getTime();
 
-		setTimeout(this.warUpdateHandler.bind(this), 10_000);
+		await Util.delay(((endTime - startTime) / 1000 > this._warLoopInterval ? 0 : (this._warLoopInterval * 1000 - (endTime - startTime))));
+		this.warUpdateHandler.call(this);
 	}
 
 	private async runClanUpdate(tag: string) {
@@ -302,4 +318,13 @@ export class EventManager {
 			return this._wars.set(key, war);
 		});
 	}
+}
+
+/* Control Loops */
+export interface LoopInterval {
+	clans?: number;
+
+	players?: number;
+
+	wars?: number;
 }

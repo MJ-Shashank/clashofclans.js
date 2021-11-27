@@ -224,7 +224,7 @@ export class RequestHandler {
 			const props = decoded.limits.find((limit: { cidrs: string[] }) => limit.hasOwnProperty('cidrs'));
 			return (props.cidrs[0] as string).match(IP_REGEX)![0];
 		} catch {
-			const body = await fetch('https://api.ipify.org', { timeout: 10_000 }).then((res) => res.text());
+			const body = await fetch('https://api.ipify.org', { timeout: 10_000 }).then((res: any) => res.text());
 			return body.match(IP_REGEX)?.[0] ?? null;
 		}
 	}
@@ -267,6 +267,9 @@ export interface ClientOptions {
 	 * ```
 	 */
 	throttler?: QueueThrottler | BatchThrottler;
+
+	/* Clan Loop Interval */
+	clanLoopInterval: number;
 }
 
 /** Search options for request. */
