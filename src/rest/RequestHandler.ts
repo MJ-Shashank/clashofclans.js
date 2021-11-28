@@ -12,6 +12,7 @@ const agent = new https.Agent({ keepAlive: true });
 /** Represents a Request Handler. */
 export class RequestHandler {
 	#keyIndex = 0; // eslint-disable-line
+	#keyRequest: number = 0;
 
 	private email!: string;
 	private password!: string;
@@ -42,6 +43,12 @@ export class RequestHandler {
 
 	private get _key() {
 		const key = this._keys[this.#keyIndex];
+		if (this.#keyRequest < (this.throttler?.getRateLimit() || 10 * this._keys.length)) {
+			this.#keyRequest += 1
+			return key
+		} else {
+			this.#keyRequest = 0;
+		}
 		this.#keyIndex = this.#keyIndex + 1 >= this._keys.length ? 0 : this.#keyIndex + 1;
 		return key;
 	}
@@ -224,8 +231,8 @@ export class RequestHandler {
 			const props = decoded.limits.find((limit: { cidrs: string[] }) => limit.hasOwnProperty('cidrs'));
 			return (props.cidrs[0] as string).match(IP_REGEX)![0];
 		} catch {
-			const body = await fetch('https://api.ipify.org', { timeout: 10_000 }).then((res: any) => res.text());
-			return body.match(IP_REGEX)?.[0] ?? null;
+			const body = await fetch('https://ifconfig.co/ip', { timeout: 10_000 }).then((res: any) => res.text());
+			return body.trim().match(IP_REGEX)?.[0] ?? null;
 		}
 	}
 }
@@ -268,8 +275,6 @@ export interface ClientOptions {
 	 */
 	throttler?: QueueThrottler | BatchThrottler;
 
-	/* Clan Loop Interval */
-	clanLoopInterval: number;
 }
 
 /** Search options for request. */

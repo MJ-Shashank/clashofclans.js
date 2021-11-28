@@ -20,6 +20,10 @@ export class QueueThrottler {
 		return this.promises.length;
 	}
 
+	public async getRateLimit() {
+		return null; // Ignore
+	}
+
 	public async throttle() {
 		if (this.lastRun) {
 			const difference = Date.now() - this.lastRun;
@@ -60,6 +64,10 @@ export class BatchThrottler {
 
 	public constructor(rateLimit = 10) {
 		this.rateLimit = rateLimit;
+	}
+
+	public async getRateLimit() {
+		return this.rateLimit;
 	}
 
 	public async wait() {
